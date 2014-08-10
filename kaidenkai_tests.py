@@ -3,7 +3,7 @@ import kaidenkai
 import unittest
 import tempfile
 
-class FlaskrTestCase(unittest.TestCase):
+class KaidenkaiTestCase(unittest.TestCase):
 
 # ----------------------- set up and tear down ----------------------- #
     def setUp(self):
@@ -62,3 +62,4 @@ class FlaskrTestCase(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
