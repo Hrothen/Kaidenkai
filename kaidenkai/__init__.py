@@ -2,7 +2,7 @@ import os
 #import sqlite3
 from flask import Flask, request, session, g, redirect, url_for, abort, \
      render_template, flash
-from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String
+from sqlalchemy import create_engine, MetaData, Table, Column, Integer, Text
 
 # create the application
 app = Flask(__name__)
@@ -21,10 +21,10 @@ app.config.from_envvar('KAIDENKAI_SETTINGS', silent=True)
 engine = create_engine(app.config['DATABASE'], convert_unicode=True)
 metadata = MetaData(bind=engine)
 
-entries = Table('entries', metadata,
+posts = Table('posts', metadata,
     Column('id', Integer, primary_key=True),
-    Column('title', String, nullable=False),
-    Column('text', String, nullable=False),
+    Column('title', Text, nullable=False),
+    Column('text', Text, nullable=False),
     sqlite_autoincrement=True
 )
 
@@ -53,7 +53,7 @@ def close_db(error):
 @app.route('/')
 def show_entries():
     db = get_db()
-    cur = db.execute('select title, text from entries order by id desc')
+    cur = db.execute('select title, text from posts order by id desc')
     entries = cur.fetchall()
     return render_template('show_entries.html',entries=entries)
 
@@ -63,7 +63,7 @@ def add_entry():
     if not session.get('logged_in'):
         abort(401)
     db = get_db()
-    db.execute('insert into entries (title, text) values (?, ?)',
+    db.execute('insert into posts (title, text) values (?, ?)',
                  [request.form['title'], request.form['text']])
     flash('New entry was successfully posted')
     return redirect(url_for('show_entries'))
