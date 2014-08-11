@@ -16,7 +16,11 @@ class KaidenkaiTestCase(unittest.TestCase):
 
         with kaidenkai.app.app_context():
             db = kaidenkai.get_db()
-            ins = kaidenkai.users.insert().values(user_login='admin', name='admin', password='default')
+            ins = kaidenkai.users.insert().values(
+                user_login='admin',
+                name='Nidhoggr, the net serpent',
+                password='default',
+                bio='Devourer of packets')
             db.execute(ins)
 
     def tearDown(self):
