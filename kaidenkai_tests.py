@@ -7,14 +7,15 @@ class KaidenkaiTestCase(unittest.TestCase):
 
 # ----------------------- set up and tear down ----------------------- #
     def setUp(self):
-        self.db_fd, kaidenkai.app.config['DATABASE'] = tempfile.mkstemp()
+        self.db_fd, p = tempfile.mkstemp()
+        kaidenkai.app.config['DATABASE'] = 'sqlite:///' + p
         kaidenkai.app.config['TESTING'] = True
         self.app = kaidenkai.app.test_client()
         kaidenkai.init_db()
 
     def tearDown(self):
         os.close(self.db_fd)
-        os.unlink(kaidenkai.app.config['DATABASE'])
+        os.unlink(kaidenkai.app.config['DATABASE'][10:])
 
 # ------------------------------ Utils ------------------------------- #
 

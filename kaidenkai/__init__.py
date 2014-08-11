@@ -1,7 +1,8 @@
 import os
-import sqlite3
+#import sqlite3
 from flask import Flask, request, session, g, redirect, url_for, abort, \
      render_template, flash
+from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String
 
 # create the application
 app = Flask(__name__)
@@ -9,7 +10,7 @@ app.config.from_object(__name__)
 
 # Load default config and override config from an environment variable
 app.config.update(dict(
-    DATABASE=os.path.join(app.root_path, 'kaidenkai.db'),
+    DATABASE='sqlite:////' + os.path.join(app.root_path, 'kaidenkai.db'),
     DEBUG=True,
     SECRET_KEY='development key',
     USERNAME='admin',
@@ -17,35 +18,36 @@ app.config.update(dict(
 ))
 app.config.from_envvar('KAIDENKAI_SETTINGS', silent=True)
 
+engine = create_engine(app.config['DATABASE'], convert_unicode=True)
+metadata = MetaData(bind=engine)
 
-def connect_db():
-    """Connects to the specific database"""
-    rv = sqlite3.connect(app.config['DATABASE'])
-    rv.row_factory = sqlite3.Row
-    return rv
+entries = Table('entries', metadata,
+    Column('id', Integer, primary_key=True),
+    Column('title', String, nullable=False),
+    Column('text', String, nullable=False),
+    sqlite_autoincrement=True
+)
 
 
 def init_db():
     with app.app_context():
-        db = get_db()
-        with app.open_resource('schema.sql', mode='r') as f:
-            db.cursor().executescript(f.read())
-        db.commit()
+        metadata.drop_all()
+        metadata.create_all()
 
 
 def get_db():
     """Opens a new database connection if there is none yet for the
     current application context"""
-    if not hasattr(g, 'sqlite_db'):
-        g.sqlite_db = connect_db()
-    return g.sqlite_db
+    if not hasattr(g, 'sqlalchemy_db'):
+        g.sqlalchemy_db = engine.connect()
+    return g.sqlalchemy_db
 
 
 @app.teardown_appcontext
 def close_db(error):
     """Closes the database at the end of the request"""
-    if hasattr(g, 'sqlite_db'):
-        g.sqlite_db.close()
+    if hasattr(g, 'sqlalchemy_db'):
+        g.sqlalchemy_db.close()
 
 
 @app.route('/')
@@ -63,7 +65,6 @@ def add_entry():
     db = get_db()
     db.execute('insert into entries (title, text) values (?, ?)',
                  [request.form['title'], request.form['text']])
-    db.commit()
     flash('New entry was successfully posted')
     return redirect(url_for('show_entries'))
 
