@@ -2,6 +2,7 @@ import os
 import kaidenkai
 import unittest
 import tempfile
+from sqlalchemy.sql import insert
 
 class KaidenkaiTestCase(unittest.TestCase):
 
@@ -12,6 +13,11 @@ class KaidenkaiTestCase(unittest.TestCase):
         kaidenkai.app.config['TESTING'] = True
         self.app = kaidenkai.app.test_client()
         kaidenkai.init_db()
+
+        with kaidenkai.app.app_context():
+            db = kaidenkai.get_db()
+            ins = kaidenkai.users.insert().values(user_login='admin', name='admin', password='default')
+            db.execute(ins)
 
     def tearDown(self):
         os.close(self.db_fd)
