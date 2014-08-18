@@ -6,6 +6,7 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.sql import select
 from sqlalchemy import create_engine, event, MetaData, Table, Column, \
      Integer, Text, ForeignKey
+from werkzeug import check_password_hash, generate_password_hash
 
 # create the application
 app = Flask(__name__)
@@ -63,6 +64,20 @@ def get_db():
     return g.sqlalchemy_db
 
 
+def query_db(query, args=(), one=False):
+    cur = get_db().execute(query,args)
+    rv = cur.first() if one else cur.fetchall()
+    return rv
+
+
+@app.before_request
+def before_request():
+    g.user = None
+    if 'user_id' in session:
+        g.user = query_db('select * from users where user_id = ?',
+                         [session['user_id']],one=True)
+
+
 @app.teardown_appcontext
 def close_db(error):
     """Closes the database at the end of the request"""
@@ -72,49 +87,62 @@ def close_db(error):
 
 @app.route('/')
 def show_entries():
-    db = get_db()
-    cur = db.execute('select title, text from posts order by post_id desc')
-    entries = cur.fetchall()
+    #db = get_db()
+    #cur = db.execute('select title, text from posts order by post_id desc')
+    #entries = cur.fetchall()
+    entries = query_db('select title, text from posts order by post_id desc')
     return render_template('show_entries.html',entries=entries)
 
 
 @app.route('/about')
 def show_authors():
-    db = get_db()
-    cur = db.execute('select name, homepage, bio from users order by name asc')
-    authors = cur.fetchall()
+    #db = get_db()
+    #cur = db.execute('select name, homepage, bio from users order by name asc')
+    #authors = cur.fetchall()
+    authors = query_db('select name, homepage, bio from users order by name asc')
     return render_template('about.html',authors=authors)
 
 
 @app.route('/add', methods=['POST'])
 def add_entry():
-    if not session.get('logged_in'):
+    #if not session.get('logged_in'):
+    #    abort(401)
+    #db = get_db()
+    #usr = session.get('user_id')
+    #db.execute('insert into posts (title, text, user_id) values (?, ?, ?)',
+    #             [request.form['title'], request.form['text'], usr])
+    if 'user_id' not in session:
         abort(401)
-    db = get_db()
-    usr = session.get('user_id')
-    db.execute('insert into posts (title, text, user_id) values (?, ?, ?)',
-                 [request.form['title'], request.form['text'], usr])
+    if request.form['text']:
+        db = get_db()
+        db.execute('''insert into posts (title, text, user_id) 
+            values (?, ?, ?)''', (request.form['title'], request.form['text'],
+                                  session['user_id']))
     flash('New entry was successfully posted')
     return redirect(url_for('show_entries'))
 
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    if g.user:
+        return redirect(url_for('show_entries'))
     error = None
     if request.method == 'POST':
-        username = request.form['username']
-        db = get_db()
-        s = select([users.c.user_id, users.c.user_login, users.c.password])\
-           .where(users.c.user_login == username)
+        #username = request.form['username']
+        #db = get_db()
+        #s = select([users.c.user_id, users.c.user_login, users.c.password])\
+        #   .where(users.c.user_login == username)
         #cur = db.execute('select user_id, user_login, password from users where user_login = ' + username)
-        cur = db.execute(s)
-        user = cur.first()
-        if user == None:
+        #cur = db.execute(s)
+        #user = cur.first()
+        user = query_db('select * from users where user_login = ?',
+                        [request.form['username']], one=True)
+        if user is None:
             error = 'Invalid username'
         elif request.form['password'] != user.password:
             error = 'Invalid password'
         else:
-            session['logged_in'] = True
+            #session['logged_in'] = True
             session['user_id'] = user.user_id
             flash('You were logged in')
             return redirect(url_for('show_entries'))
@@ -123,7 +151,7 @@ def login():
 
 @app.route('/logout')
 def logout():
-    session.pop('logged_in', None)
+    session.pop('user_id', None)
     flash('You were logged out')
     return redirect(url_for('show_entries'))
 
