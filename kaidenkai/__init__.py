@@ -35,7 +35,7 @@ posts = Table('posts', metadata,
 
 users = Table('users', metadata,
     Column('user_id', Integer, primary_key=True),
-    Column('username', Text, nullable=False),
+    Column('username', Text, nullable=False, unique=True),
     Column('password', Text, nullable=False),
     Column('name', Text, nullable=False),
     Column('homepage', Text),
