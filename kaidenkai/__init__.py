@@ -35,7 +35,7 @@ posts = Table('posts', metadata,
 
 users = Table('users', metadata,
     Column('user_id', Integer, primary_key=True),
-    Column('user_login', Text, nullable=False),
+    Column('username', Text, nullable=False),
     Column('password', Text, nullable=False),
     Column('name', Text, nullable=False),
     Column('homepage', Text),
@@ -87,30 +87,18 @@ def close_db(error):
 
 @app.route('/')
 def show_entries():
-    #db = get_db()
-    #cur = db.execute('select title, text from posts order by post_id desc')
-    #entries = cur.fetchall()
     entries = query_db('select title, text from posts order by post_id desc')
     return render_template('show_entries.html',entries=entries)
 
 
 @app.route('/about')
 def show_authors():
-    #db = get_db()
-    #cur = db.execute('select name, homepage, bio from users order by name asc')
-    #authors = cur.fetchall()
     authors = query_db('select name, homepage, bio from users order by name asc')
     return render_template('about.html',authors=authors)
 
 
 @app.route('/add', methods=['POST'])
 def add_entry():
-    #if not session.get('logged_in'):
-    #    abort(401)
-    #db = get_db()
-    #usr = session.get('user_id')
-    #db.execute('insert into posts (title, text, user_id) values (?, ?, ?)',
-    #             [request.form['title'], request.form['text'], usr])
     if 'user_id' not in session:
         abort(401)
     if request.form['text']:
@@ -128,14 +116,7 @@ def login():
         return redirect(url_for('show_entries'))
     error = None
     if request.method == 'POST':
-        #username = request.form['username']
-        #db = get_db()
-        #s = select([users.c.user_id, users.c.user_login, users.c.password])\
-        #   .where(users.c.user_login == username)
-        #cur = db.execute('select user_id, user_login, password from users where user_login = ' + username)
-        #cur = db.execute(s)
-        #user = cur.first()
-        user = query_db('select * from users where user_login = ?',
+        user = query_db('select * from users where username = ?',
                         [request.form['username']], one=True)
         if user is None:
             error = 'Invalid username'
