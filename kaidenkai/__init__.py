@@ -19,7 +19,6 @@ app.config.update(dict(
     SECRET_KEY='development key',
     USERNAME='admin',
     PASSWORD= generate_password_hash('default'),
-    PAGE_SIZE=30
 ))
 app.config.from_envvar('KAIDENKAI_SETTINGS', silent=True)
 
@@ -93,7 +92,8 @@ def close_db(error):
 @app.route('/')
 def show_entries():
     """shows all posts ordered from most to least recent"""
-    entries = query_db('select title, text from posts order by post_id desc')
+    entries = query_db('''select title, text from posts 
+                          order by post_id desc''')
     return render_template('show_entries.html',entries=entries)
 
 
