@@ -13,9 +13,9 @@ class KaidenkaiTestCase(unittest.TestCase):
         kaidenkai.app.config['DATABASE'] = 'sqlite:///' + p
         kaidenkai.app.config['TESTING'] = True
         self.app = kaidenkai.app.test_client()
-        kaidenkai.init_db()
 
         with kaidenkai.app.app_context():
+            kaidenkai.init_db()
             db = kaidenkai.get_db()
             ins = kaidenkai.users.insert().values(
                 username='admin',
@@ -31,12 +31,14 @@ class KaidenkaiTestCase(unittest.TestCase):
 # ------------------------------ Utils ------------------------------- #
 
     def login(self, username, password):
+        """helper to log in"""
         return self.app.post('/login', data=dict(
             username=username,
             password=password
         ), follow_redirects=True)
 
     def logout(self):
+        """helper to log out"""
         return self.app.get('/logout', follow_redirects=True)
 
 
@@ -44,12 +46,15 @@ class KaidenkaiTestCase(unittest.TestCase):
 
     # Check that we get the proper output when the database is emtpy 
     def test_empty_db(self):
+        """check that we get the right message when the post database
+           is empty"""
         rv = self.app.get('/')
         assert 'No entries here so far' in rv.data
 
     # Check that we can log in and out, and that login fails
     # for invalid credentials
     def test_login_logout(self):
+        """make sure login/logout works"""
         rv = self.login('admin', 'default')
         assert 'You were logged in' in rv.data
         rv = self.logout()
@@ -62,6 +67,7 @@ class KaidenkaiTestCase(unittest.TestCase):
     # Check that messages can be posted, and will allow html in the body
     # but not the title
     def test_messages(self):
+        """make sure posting works"""
         self.login('admin', 'default')
         rv = self.app.post('/add', data=dict(
             title='<Hello>',

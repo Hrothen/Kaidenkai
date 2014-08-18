@@ -45,12 +45,15 @@ users = Table('users', metadata,
 
 @event.listens_for(Engine, "connect")
 def set_sqlite_pragma(dbapi_connection, connection_record):
+    """tells sqlalchemy to use the foreign keys pragma if
+    we're using sqlite3"""
     cursor = dbapi_connection.cursor()
     cursor.execute("PRAGMA foreign_keys=ON")
     cursor.close()
 
 
 def init_db():
+    """initilize the database"""
     with app.app_context():
         metadata.drop_all()
         metadata.create_all()
@@ -65,6 +68,7 @@ def get_db():
 
 
 def query_db(query, args=(), one=False):
+    """helper function to open and then query the database"""
     cur = get_db().execute(query,args)
     rv = cur.first() if one else cur.fetchall()
     return rv
@@ -87,18 +91,21 @@ def close_db(error):
 
 @app.route('/')
 def show_entries():
+    """shows all posts ordered from most to least recent"""
     entries = query_db('select title, text from posts order by post_id desc')
     return render_template('show_entries.html',entries=entries)
 
 
 @app.route('/about')
 def show_authors():
+    """shows author bios ordered alphabetically by name"""
     authors = query_db('select name, homepage, bio from users order by name asc')
     return render_template('about.html',authors=authors)
 
 
 @app.route('/add', methods=['POST'])
 def add_entry():
+    """adds a new post"""
     if 'user_id' not in session:
         abort(401)
     if request.form['text']:
@@ -112,6 +119,7 @@ def add_entry():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    """logs the user in"""
     if g.user:
         return redirect(url_for('show_entries'))
     error = None
@@ -131,6 +139,7 @@ def login():
 
 @app.route('/logout')
 def logout():
+    """logs the user out"""
     session.pop('user_id', None)
     flash('You were logged out')
     return redirect(url_for('show_entries'))
