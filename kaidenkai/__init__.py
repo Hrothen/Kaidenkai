@@ -18,7 +18,8 @@ app.config.update(dict(
     DEBUG=True,
     SECRET_KEY='development key',
     USERNAME='admin',
-    PASSWORD= generate_password_hash('default')
+    PASSWORD= generate_password_hash('default'),
+    PAGE_SIZE=30
 ))
 app.config.from_envvar('KAIDENKAI_SETTINGS', silent=True)
 
