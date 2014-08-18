@@ -18,7 +18,7 @@ app.config.update(dict(
     DEBUG=True,
     SECRET_KEY='development key',
     USERNAME='admin',
-    PASSWORD='default'
+    PASSWORD= generate_password_hash('default')
 ))
 app.config.from_envvar('KAIDENKAI_SETTINGS', silent=True)
 
@@ -120,10 +120,9 @@ def login():
                         [request.form['username']], one=True)
         if user is None:
             error = 'Invalid username'
-        elif request.form['password'] != user.password:
+        elif not check_password_hash (user['password'], request.form['password']):
             error = 'Invalid password'
         else:
-            #session['logged_in'] = True
             session['user_id'] = user.user_id
             flash('You were logged in')
             return redirect(url_for('show_entries'))

@@ -3,6 +3,7 @@ import kaidenkai
 import unittest
 import tempfile
 from sqlalchemy.sql import insert
+from werkzeug import generate_password_hash
 
 class KaidenkaiTestCase(unittest.TestCase):
 
@@ -19,7 +20,7 @@ class KaidenkaiTestCase(unittest.TestCase):
             ins = kaidenkai.users.insert().values(
                 username='admin',
                 name='Nidhoggr, the net serpent',
-                password='default',
+                password=generate_password_hash('default'),
                 bio='Devourer of packets')
             db.execute(ins)
 
